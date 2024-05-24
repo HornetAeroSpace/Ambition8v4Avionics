@@ -1,0 +1,21 @@
+# Ignore Visual Studio Code settings folder
+.vscode/
+
+# Ignore build output directories
+build/
+bin/
+
+# Ignore system-specific files
+Thumbs.db
+.DS_Store
+
+# Ignore compiled binary files
+*.exe
+*.out
+*.o
+
+# Ignore log files
+*.log
+
+# Ignore other specific files and directories as needed
+*.json
