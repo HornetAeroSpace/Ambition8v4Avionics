@@ -3,8 +3,8 @@
 #include "Arduino.h"
 #include <Wire.h>
 #include <string>
-#include <SD.h> 
-#include <RTClib.h>
+//#include <SD.h> 
+//#include <RTClib.h>
 #include <math.h>
 
 // ** Necessary dependencies to download
@@ -39,6 +39,14 @@
 Adafruit_BMP3XX bmp;
 Adafruit_ICM20948 icm;
 Adafruit_ADXL375 accel375 = Adafruit_ADXL375(5,&Wire2);
+
+float getSeconds(long time){
+  return float(abs((time/1000)-(round(time/60000)*60)));
+}
+
+float getMinutes(long time){
+  return float(round(time/60000));
+}
 
 void setup() {
   //Initialize Wire
@@ -76,13 +84,14 @@ void setup() {
   }else{
     Serial.println("ADXL375 Found!");
   }
-
+/*
   //Initialize SD Card
   Serial.print("Initializing SD card...");
   if (!SD.begin(BUILTIN_SDCARD)) {
     Serial.println("Initialization failed!");
     return;
   }
+  */
 
   Serial.println("Initialization done.");
 
@@ -121,33 +130,64 @@ void loop() {
   accel375.getEvent(&event);
 
   //Store Data
-  float sensorValues[14];   
-  int t = millis();
+  //static float sensorValues[14];   
+  static long t = millis();
   //Serial.println(t);
   //Serial.println(getMinutes(t));
   //Serial.println(getSeconds(t));
   //Time Data Retrieved
-  sensorValues[0] = getMinutes(t); 
-  sensorValues[1] = getSeconds(t); 
+  //sensorValues[0] = getMinutes(t); 
+  //sensorValues[1] = getSeconds(t); 
 
   //Altitude/Temperature Data
-  sensorValues[2] = bmp.temperature;  
-  sensorValues[3] = bmp.pressure/100; 
-  sensorValues[4] = bmp.readAltitude(SEALEVELPRESSURE_HPA); 
+  //sensorValues[2] = bmp.temperature;
+  static double bmpTemp = bmp.temperature;
+  //sensorValues[3] = bmp.pressure/100; 
+  static double bmpPresh = bmp.pressure/100;
+  //sensorValues[4] = bmp.readAltitude(SEALEVELPRESSURE_HPA);
+  static double bmpAlt = bmp.readAltitude(SEALEVELPRESSURE_HPA); 
 
   //IMU Data
-  sensorValues[5] = accel.acceleration.x;  
-  sensorValues[6] = accel.acceleration.y; 
-  sensorValues[7] = accel.acceleration.z;
-  sensorValues[8] = gyro.gyro.x; 
-  sensorValues[9] = gyro.gyro.y; 
-  sensorValues[10] = gyro.gyro.z; 
+  //sensorValues[5] = accel.acceleration.x;
+  static float imuAccelX = accel.acceleration.x;
+  //sensorValues[6] = accel.acceleration.y;
+  static float imuAccelY = accel.acceleration.y;
+  //sensorValues[7] = accel.acceleration.z;
+  static float imuAccelZ = accel.acceleration.z;
+  //sensorValues[8] = gyro.gyro.x; 
+  static float gyroX = gyro.gyro.x;
+  //sensorValues[9] = gyro.gyro.y;
+  static float gyroY = gyro.gyro.y;
+  //sensorValues[10] = gyro.gyro.z; 
+  static float gyroZ = gyro.gyro.z;
 
   //Acceleration Data
-  sensorValues[11] = event.acceleration.x;  
-  sensorValues[12] = event.acceleration.y; 
-  sensorValues[13] = event.acceleration.z; 
+  //sensorValues[11] = event.acceleration.x;
+  static float accelX = event.acceleration.x;
+  //sensorValues[12] = event.acceleration.y;
+  static float accelY = event.acceleration.y; 
+  //sensorValues[13] = event.acceleration.z;
+  static float accelZ = event.acceleration.z; 
 
+Serial.print("Time: "); Serial.print(t);
+Serial.print(", Minutes: "); Serial.print(getMinutes(t));
+Serial.print(", Seconds: "); Serial.print(getSeconds(t));
+Serial.print(", BMP Temp: "); Serial.print(bmpTemp);
+Serial.print(", BMP Pressure: "); Serial.print(bmpPresh);
+Serial.print(", BMP Altitude: "); Serial.print(bmpAlt);
+Serial.print(", IMU Accel X: "); Serial.print(imuAccelX);
+Serial.print(", IMU Accel Y: "); Serial.print(imuAccelY);
+Serial.print(", IMU Accel Z: "); Serial.print(imuAccelZ);
+Serial.print(", Gyro X: "); Serial.print(gyroX);
+Serial.print(", Gyro Y: "); Serial.print(gyroY);
+Serial.print(", Gyro Z: "); Serial.print(gyroZ);
+Serial.print(", Accel X: "); Serial.print(accelX);
+Serial.print(", Accel Y: "); Serial.print(accelY);
+Serial.print(", Accel Z: "); Serial.print(accelZ);
+Serial.println();
+
+  //if(brainOn)
+/*
   File dataFile = SD.open("data_Combined.csv", FILE_WRITE);
 
   if (dataFile) {
@@ -166,13 +206,5 @@ void loop() {
   }
 
   dataFile.close();
-
-}
-
-float getSeconds(long time){
-  return float(abs((time/1000)-(round(time/60000)*60)));
-}
-
-float getMinutes(long time){
-  return float(round(time/60000));
+*/
 }
