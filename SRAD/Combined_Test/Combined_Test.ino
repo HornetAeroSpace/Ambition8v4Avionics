@@ -47,8 +47,42 @@ float getMinutes(long time){
   return float(round(time/60000));
 }
 
-// bool Align(long pasT, long curT, ){
+long currT;
+float tempAk = 0;
+double tempSh = 0;
+int stepAk = 0;
+int stepSh = 0;
+void sandDropAk(float delta, float linPas){
+  float linDif = tempAk - delta;
+    Serial.println("Past, pres diff: "+String(linPas)+","+String(linDif));
+  if(linPas*linDif <= 0){
+    tempAk = 0;
+    return;
+  }else{
+    if (stepAk==0){
+      tempAk = delta;
+    }
+    stepAk = stepAk+1;
+    return;
+  }
+  Serial.println("SndDropF No If");
+}
 
+void sandDropSh(double delta, float linPas){
+  float linDif = tempSh - delta;
+  Serial.println("Past, pres diff: "+String(linPas)+","+String(linDif));
+  if(linPas*linDif <= 0){
+    tempSh = 0;
+    return;
+  }else{
+    if (stepSh==0){
+      tempSh = delta;
+    }
+    stepSh = stepSh+1;
+    return;
+  }
+  Serial.println("SndDropD No If");
+}
 // }
 float globX;
 float globY;
@@ -111,9 +145,12 @@ void setup() {
   bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_3);
   bmp.setOutputDataRate(BMP3_ODR_50_HZ);
 
- globX = 0.0;
- globY = 0.0;
- globZ = 0.0;
+  void sandDropAk(float delta);
+  void sandDropAk(float delta);
+  
+  globX = 0.0;
+  globY = 0.0;
+  globZ = 0.0;
 }
 
 
@@ -140,9 +177,9 @@ void loop() {
 
   //Store Data
   // 1 sec = 1000 milsec
-  long currT;
-  long pasT = currT;
+  //long pasT = currT;
   currT = millis();
+
 
   //Altitude/Temperature Data
   double bmpTemp = bmp.temperature;
@@ -163,6 +200,13 @@ void loop() {
   float accelZ = event.acceleration.z;  
 
   //operations
+  float linPas = imuAccelY - tempAk;
+  sandDropAk(imuAccelY, linPas);
+  tempAk = imuAccelY;
+  linPas = bmpPresh - tempSh;
+  sandDropSh(bmpPresh, linPas);
+  tempSh = bmpPresh;
+
   globX += gyroX;
   globY += gyroY;
   globZ += gyroZ;
@@ -181,19 +225,13 @@ void loop() {
     output += "Time: " + String(currT);
 
     // Print sensor values in the same line
-    output += ", Global X,Y,Z: " + String(globX) + String(globY) + String(globZ);
-    output += ", BMP Temp: " + String(bmpTemp);
-    output += ", BMP Pressure: " + String(bmpPresh);
-    output += ", BMP Altitude: " + String(bmpAlt);
-    output += ", IMU Accel X: " + String(imuAccelX);
-    output += ", IMU Accel Y: " + String(imuAccelY);
-    output += ", IMU Accel Z: " + String(imuAccelZ);
-    output += ", Gyro X: " + String(gyroX);
-    output += ", Gyro Y: " + String(gyroY);
-    output += ", Gyro Z: " + String(gyroZ);
-    output += ", Accel X: " + String(accelX);
-    output += ", Accel Y: " + String(accelY);
-    output += ", Accel Z: " + String(accelZ);
+    output += ", BMP Temp: " + String(bmpTemp) + ", BMP Pressure: " + String(bmpPresh) + ", BMP Altitude: " + String(bmpAlt);
+    output += ", IMU Accel X Y Z: " + String(imuAccelX) + "," + String(imuAccelY) + "," + String(imuAccelZ);
+    output += ", Global X Y Z: " + String(globX) + "," + String(globY) + "," + String(globZ);
+    output += ", Gyro Dlt X Y Z: " + String(gyroX) + "," + String(gyroY) + "," + String(gyroZ);
+    output += ", Accelo X Y Z: " + String(accelX) + "," + String(accelY) + "," + String(accelZ);
+    output += ", LinDlta Loop Pressure: " + String(stepSh);
+    output += ", LinDlta Loop Y Accel: " + String(stepAk);
     //output += "\n";
 
     // Write to Serial
@@ -204,5 +242,5 @@ void loop() {
     Serial.println("\nData written successfully.");
 
   //dataFile.close();
-delay(1000);
+delay(180);
 }
