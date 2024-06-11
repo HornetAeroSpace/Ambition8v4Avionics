@@ -3,7 +3,7 @@
 #include "Arduino.h"
 #include <Wire.h>
 #include <string>
-#include <SD.h> 
+//#include <SD.h> 
 #include <math.h>
 
 // ** Necessary dependencies to download
@@ -47,7 +47,14 @@ float getMinutes(long time){
   return float(round(time/60000));
 }
 
+// bool Align(long pasT, long curT, ){
+
+// }
+float globX;
+float globY;
+float globZ;
 void setup() {
+
   //Initialize Wire
   Wire.begin();
   Wire1.begin();
@@ -85,12 +92,11 @@ void setup() {
   }
 
   //Initialize SD Card
-  Serial.print("Initializing SD card...");
-  if (!SD.begin(BUILTIN_SDCARD)) {
-    Serial.println("Initialization failed!");
-    return;
-  }
-/*  */
+  // Serial.print("Initializing SD card...");
+  // if (!SD.begin(BUILTIN_SDCARD)) {
+  //   Serial.println("Initialization failed!");
+  //   return;
+  // }
 
   Serial.println("Initialization done.");
 
@@ -105,8 +111,9 @@ void setup() {
   bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_3);
   bmp.setOutputDataRate(BMP3_ODR_50_HZ);
 
-  //Set Accelerometer data rate
-  
+ globX = 0.0;
+ globY = 0.0;
+ globZ = 0.0;
 }
 
 
@@ -128,9 +135,14 @@ void loop() {
   sensors_event_t event;
   accel375.getEvent(&event);
 
-  //Store Data
-  long t = millis();
+  //decision switch
+  bool grnLight = false;
 
+  //Store Data
+  // 1 sec = 1000 milsec
+  long currT;
+  long pasT = currT;
+  currT = millis();
 
   //Altitude/Temperature Data
   double bmpTemp = bmp.temperature;
@@ -138,7 +150,7 @@ void loop() {
   double bmpAlt = bmp.readAltitude(SEALEVELPRESSURE_HPA); 
 
   //IMU Data
-  float imuAccelX = accel.acceleration.x;
+  float imuAccelX = (accel.acceleration.x * -1);
   float imuAccelY = accel.acceleration.y;
   float imuAccelZ = accel.acceleration.z;
   float gyroX = gyro.gyro.x;
@@ -148,19 +160,28 @@ void loop() {
   //Acceleration Data
   float accelX = event.acceleration.x;
   float accelY = event.acceleration.y; 
-  float accelZ = event.acceleration.z; 
+  float accelZ = event.acceleration.z;  
 
+  //operations
+  globX += gyroX;
+  globY += gyroY;
+  globZ += gyroZ;
 
-  File dataFile = SD.open("data_Combined.csv", FILE_WRITE);
+  // if(aligned){
+  //   ();
+  // }
+
+  //File dataFile = SD.open("data_Combined.csv", FILE_WRITE);
 
     Serial.println("Writing to data.csv...");
     // Create a string to hold the complete output
     String output = "";
 
     // Print time
-    output += "Time: " + String(t);
+    output += "Time: " + String(currT);
 
     // Print sensor values in the same line
+    output += ", Global X,Y,Z: " + String(globX) + String(globY) + String(globZ);
     output += ", BMP Temp: " + String(bmpTemp);
     output += ", BMP Pressure: " + String(bmpPresh);
     output += ", BMP Altitude: " + String(bmpAlt);
@@ -179,10 +200,9 @@ void loop() {
     Serial.print(output);
 
     // Write to file
-    dataFile.println(output);
+    //dataFile.println(output);
     Serial.println("\nData written successfully.");
 
-  dataFile.close();
-/**/
-delay(100);
+  //dataFile.close();
+delay(1000);
 }
