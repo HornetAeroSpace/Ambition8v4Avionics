@@ -48,15 +48,16 @@ float getMinutes(long time){
 }
 
 long currT;
-float tempAk = 0;
-double tempSh = 0;
+float tempAk[2] = {0,0};
+double tempAlt[2] = {0,0};
 int stepAk = 0;
-int stepSh = 0;
-void sandDropAk(float delta, float linPas){
-  float linDif = tempAk - delta;
+int stepAlt = 0;
+void sandDropAk(float delta, int flip, int invFlp){
+  float linDif = delta - tempAk[flip];
+  float linPas = tempAk[1] - tempAk[0];
     Serial.println("Past, pres diff: "+String(linPas)+","+String(linDif));
   if(linPas*linDif <= 0){
-    tempAk = 0;
+    stepAk = 0;
     return;
   }else{
     if (stepAk==0){
@@ -65,24 +66,24 @@ void sandDropAk(float delta, float linPas){
     stepAk = stepAk+1;
     return;
   }
-  Serial.println("SndDropF No If");
+  Serial.println("SndDropAk No If");
 }
 
-void sandDropSh(double delta, float linPas){
-  float linDif = tempSh - delta;
-  Serial.println("Past, pres diff: "+String(linPas)+","+String(linDif));
-  if(linPas*linDif <= 0){
-    tempSh = 0;
-    return;
-  }else{
-    if (stepSh==0){
-      tempSh = delta;
-    }
-    stepSh = stepSh+1;
-    return;
-  }
-  Serial.println("SndDropD No If");
-}
+// void sandDropAlt(double delta, int flip){
+//   float linDif = tempAlt[flip] - delta;
+//   float linPas = tempAlt[flip]
+//   Serial.println("Past, pres diff: "+String(linPas)+","+String(linDif));
+//   if(linPas*linDif <= 0){
+//     tempAlt = 0;
+//     return;
+//   }else{
+//     if (stepAlt==0){
+//       tempAlt = delta;
+//     }
+//     stepAlt = stepAlt+1;
+//     return;
+//   }
+//   Serial.println("SndDropAlt No If");
 // }
 float globX;
 float globY;
@@ -179,7 +180,11 @@ void loop() {
   // 1 sec = 1000 milsec
   //long pasT = currT;
   currT = millis();
-
+  int sec = getSeconds(currT);
+  int flip = (sec/2);
+  int invFlp = ((sec - 1)*(-1));
+  Serial.println(flip);
+  Serial.println(invFlp);
 
   //Altitude/Temperature Data
   double bmpTemp = bmp.temperature;
@@ -200,12 +205,16 @@ void loop() {
   float accelZ = event.acceleration.z;  
 
   //operations
-  float linPas = imuAccelY - tempAk;
-  sandDropAk(imuAccelY, linPas);
-  tempAk = imuAccelY;
-  linPas = bmpPresh - tempSh;
-  sandDropSh(bmpPresh, linPas);
-  tempSh = bmpPresh;
+  sandDropAk(imuAccelY, flip, invFlp);
+  if(flip == 0){
+    tempAk[0] = imuAccelY;
+  }else{
+    tempAk[1] = imuAccelY;
+  }
+  //tempAk = imuAccelY;
+  // linPas = bmpAlt - tempAlt;
+  // sandDropAlt(bmpAlt, linPas);
+  // tempAlt = bmpAlt;
 
   globX += gyroX;
   globY += gyroY;
@@ -230,7 +239,7 @@ void loop() {
     output += ", Global X Y Z: " + String(globX) + "," + String(globY) + "," + String(globZ);
     output += ", Gyro Dlt X Y Z: " + String(gyroX) + "," + String(gyroY) + "," + String(gyroZ);
     output += ", Accelo X Y Z: " + String(accelX) + "," + String(accelY) + "," + String(accelZ);
-    output += ", LinDlta Loop Pressure: " + String(stepSh);
+    output += ", LinDlta Loop Pressure: " + String(stepAlt);
     output += ", LinDlta Loop Y Accel: " + String(stepAk);
     //output += "\n";
 
