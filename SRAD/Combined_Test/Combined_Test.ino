@@ -43,9 +43,9 @@ float getSeconds(long time){
   return float(abs((time/1000)-(round(time/60000)*60)));
 }
 
-float getMinutes(long time){
-  return float(round(time/60000));
-}
+// float getMinutes(long time){
+//   return float(round(time/60000));
+// }
 
 long currT;
 float tempAk[2] = {0,0};
@@ -56,14 +56,11 @@ int stepAk = 0;
 void sandDropAk(float delta, int flip, int invFlp){
   float linDif = delta - tempAk[flip];
   float linPas = tempAk[flip] - tempAk[invFlp];
-    Serial.println("Past, pres diff: "+String(linPas)+","+String(linDif));
+    Serial.println("linPas, linDif: "+String(linPas)+","+String(linDif));
   if(linPas*linDif <= 0){
     stepAk = 0;
     return;
   }else{
-    if (stepAk==0){
-      tempAk = delta;
-    }
     stepAk = stepAk+1;
     return;
   }
@@ -147,8 +144,8 @@ void setup() {
   bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_3);
   bmp.setOutputDataRate(BMP3_ODR_50_HZ);
 
-  void sandDropAk(float delta);
-  void sandDropAk(float delta);
+void sandDropAk(float delta, int flip, int invFlp);
+  //void sandDropAlt(float delta);
   
   globX = 0.0;
   globY = 0.0;
@@ -181,11 +178,14 @@ void loop() {
   // 1 sec = 1000 milsec
   //long pasT = currT;
   currT = millis();
-  int sec = getSeconds(currT);
-  int flip = (sec/2);
-  int invFlp = ((sec - 1)*(-1));
-  Serial.println(flip);
-  Serial.println(invFlp);
+  //int sec = getSeconds(currT);
+  static int cyCow = -1;
+  cyCow = cyCow + 1;
+  Serial.println("\ncyCow: "+String(cyCow));
+  int flip = (cyCow % 2);
+  int invFlp = ((flip - 1)*(-1));
+  Serial.println("Flip: "+String(flip));
+  Serial.println("invFlip: "+String(invFlp));
 
   //Altitude/Temperature Data
   double bmpTemp = bmp.temperature;
@@ -207,13 +207,9 @@ void loop() {
 
   //operations
   sandDropAk(imuAccelY, flip, invFlp);
-  if(flip == 0){
-    tempAk[0] = imuAccelY;
-  }else{
-    tempAk[1] = imuAccelY;
-  }
-  Serial.println(tempAk[0]);
-  Serial.println(tempAk[1]);
+  Serial.println("First cell: "+String(tempAk[0]));
+  Serial.println("Second cell: "+String(tempAk[1]));
+  tempAk[flip] = imuAccelY;
   //tempAk = imuAccelY;
   // linPas = bmpAlt - tempAlt;
   // sandDropAlt(bmpAlt, linPas);
@@ -229,7 +225,7 @@ void loop() {
 
   //File dataFile = SD.open("data_Combined.csv", FILE_WRITE);
 
-    Serial.println("Writing to data.csv...");
+    //Serial.println("Writing to data.csv...");
     // Create a string to hold the complete output
     String output = "";
 
@@ -242,7 +238,7 @@ void loop() {
     output += ", Global X Y Z: " + String(globX) + "," + String(globY) + "," + String(globZ);
     output += ", Gyro Dlt X Y Z: " + String(gyroX) + "," + String(gyroY) + "," + String(gyroZ);
     output += ", Accelo X Y Z: " + String(accelX) + "," + String(accelY) + "," + String(accelZ);
-    output += ", LinDlta Loop Pressure: " + String(stepAlt);
+    //output += ", LinDlta Loop Pressure: " + String(stepAlt);
     output += ", LinDlta Loop Y Accel: " + String(stepAk);
     //output += "\n";
 
@@ -251,7 +247,7 @@ void loop() {
 
     // Write to file
     //dataFile.println(output);
-    Serial.println("\nData written successfully.");
+    //Serial.println("\nData written successfully.");
 
   //dataFile.close();
 delay(180);
