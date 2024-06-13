@@ -49,12 +49,13 @@ float getMinutes(long time){
 
 long currT;
 float tempAk[2] = {0,0};
-double tempAlt[2] = {0,0};
+//double tempAlt[2] = {0,0};
 int stepAk = 0;
-int stepAlt = 0;
+//int stepAlt = 0;
+//temp updates to have 2ndLast/Last cells, swapping alternations, 2nd cycle last/2nd last - IN THEORY!
 void sandDropAk(float delta, int flip, int invFlp){
   float linDif = delta - tempAk[flip];
-  float linPas = tempAk[1] - tempAk[0];
+  float linPas = tempAk[flip] - tempAk[invFlp];
     Serial.println("Past, pres diff: "+String(linPas)+","+String(linDif));
   if(linPas*linDif <= 0){
     stepAk = 0;
@@ -211,6 +212,8 @@ void loop() {
   }else{
     tempAk[1] = imuAccelY;
   }
+  Serial.println(tempAk[0]);
+  Serial.println(tempAk[1]);
   //tempAk = imuAccelY;
   // linPas = bmpAlt - tempAlt;
   // sandDropAlt(bmpAlt, linPas);
