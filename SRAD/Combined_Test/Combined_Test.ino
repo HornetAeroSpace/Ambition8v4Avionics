@@ -1,9 +1,9 @@
 #include <SPI.h>
-//#include <LoRa.h>
+#include <LoRa.h>
 #include "Arduino.h"
 #include <Wire.h>
 #include <string>
-//#include <SD.h> 
+#include <SD.h> 
 #include <math.h>
 
 // ** Necessary dependencies to download
@@ -43,9 +43,32 @@ float getSeconds(long time){
   return float(abs((time/1000)-(round(time/60000)*60)));
 }
 
-// float getMinutes(long time){
-//   return float(round(time/60000));
-// }
+void sendPacket (String send) {  
+  LoRa.beginPacket();               // start packet
+  LoRa.print(send);                 // add payload
+  LoRa.endPacket();                 // finish packet and send it
+  LoRa.idle();                      // set standby mode
+  LoRa.disableInvertIQ();           // normal mode
+  //Serial.println("message sent");
+}
+// String onReceive() {
+//   String temp = "";
+//   int packetSize = LoRa.parsePacket();
+//   if (packetSize>0) {
+//     // received a packet
+//     //Serial.println("Received packet '");
+
+//     // read packet
+//     while (LoRa.available()) {
+//       temp += (char)LoRa.read();
+//     }
+
+//   }
+
+//     return temp; 
+//   }
+
+
 
 long currT;
 float tempAk[2] = {0,0};
@@ -67,22 +90,6 @@ void sandDropAk(float delta, int flip, int invFlp){
   Serial.println("SndDropAk No If");
 }
 
-// void sandDropAlt(double delta, int flip){
-//   float linDif = tempAlt[flip] - delta;
-//   float linPas = tempAlt[flip]
-//   Serial.println("Past, pres diff: "+String(linPas)+","+String(linDif));
-//   if(linPas*linDif <= 0){
-//     tempAlt = 0;
-//     return;
-//   }else{
-//     if (stepAlt==0){
-//       tempAlt = delta;
-//     }
-//     stepAlt = stepAlt+1;
-//     return;
-//   }
-//   Serial.println("SndDropAlt No If");
-// }
 float globX;
 float globY;
 float globZ;
@@ -93,16 +100,16 @@ void setup() {
   Wire1.begin();
   Wire2.begin();
   Serial.begin(9600);
+  LoRa.setPins(SS,DIO);
 
   //Intialize Sensors
   while (!Serial);
   Serial.println("Adafruit BMP388 / BMP390 test");
   //Test to see if communicating properly
   if (!bmp.begin_I2C(0x77,&Wire)) {   // hardware I2C mode, can pass in address & alt Wire
-  //if (! bmp.begin_SPI(BMP_CS)) {  // hardware SPI mode  
-  //if (! bmp.begin_SPI(BMP_CS, BMP_SCK, BMP_MISO, BMP_MOSI)) {  // software SPI mode
+
     Serial.println("Could not find a valid BMP3 sensor, check wiring!");
-    //while (1);
+
   }
 
   Serial.println("ICM20948 Test");
@@ -125,11 +132,11 @@ void setup() {
   }
 
   //Initialize SD Card
-  // Serial.print("Initializing SD card...");
-  // if (!SD.begin(BUILTIN_SDCARD)) {
-  //   Serial.println("Initialization failed!");
-  //   return;
-  // }
+  Serial.print("Initializing SD card...");
+  if (!SD.begin(BUILTIN_SDCARD)) {
+    Serial.println("Initialization failed!");
+    return;
+  }
 
   Serial.println("Initialization done.");
 
@@ -176,16 +183,16 @@ void loop() {
 
   //Store Data
   // 1 sec = 1000 milsec
-  //long pasT = currT;
+
   currT = millis();
   //int sec = getSeconds(currT);
   static int cyCow = -1;
   cyCow = cyCow + 1;
-  Serial.println("\ncyCow: "+String(cyCow));
+  //Serial.println("\ncyCow: "+String(cyCow));
   int flip = (cyCow % 2);
   int invFlp = ((flip - 1)*(-1));
-  Serial.println("Flip: "+String(flip));
-  Serial.println("invFlip: "+String(invFlp));
+  //Serial.println("Flip: "+String(flip));
+  //Serial.println("invFlip: "+String(invFlp));
 
   //Altitude/Temperature Data
   double bmpTemp = bmp.temperature;
@@ -210,20 +217,13 @@ void loop() {
   Serial.println("First cell: "+String(tempAk[0]));
   Serial.println("Second cell: "+String(tempAk[1]));
   tempAk[flip] = imuAccelY;
-  //tempAk = imuAccelY;
-  // linPas = bmpAlt - tempAlt;
-  // sandDropAlt(bmpAlt, linPas);
-  // tempAlt = bmpAlt;
 
   globX += gyroX;
   globY += gyroY;
   globZ += gyroZ;
 
-  // if(aligned){
-  //   ();
-  // }
 
-  //File dataFile = SD.open("data_Combined.csv", FILE_WRITE);
+  File dataFile = SD.open("data_Combined.csv", FILE_WRITE);
 
     //Serial.println("Writing to data.csv...");
     // Create a string to hold the complete output
@@ -238,17 +238,18 @@ void loop() {
     output += ", Global X Y Z: " + String(globX) + "," + String(globY) + "," + String(globZ);
     output += ", Gyro Dlt X Y Z: " + String(gyroX) + "," + String(gyroY) + "," + String(gyroZ);
     output += ", Accelo X Y Z: " + String(accelX) + "," + String(accelY) + "," + String(accelZ);
-    //output += ", LinDlta Loop Pressure: " + String(stepAlt);
     output += ", LinDlta Loop Y Accel: " + String(stepAk);
-    //output += "\n";
+    output += "Cycle count: " + String(cyCow);
+    
 
     // Write to Serial
     Serial.print(output);
 
     // Write to file
-    //dataFile.println(output);
-    //Serial.println("\nData written successfully.");
+    dataFile.println(output);
+    Serial.println("\nData written successfully.");
 
-  //dataFile.close();
+  dataFile.close();
+  sendPacket(output);
 delay(180);
 }
