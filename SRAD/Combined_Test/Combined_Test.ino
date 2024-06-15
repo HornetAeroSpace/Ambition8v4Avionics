@@ -1,5 +1,5 @@
 #include <SPI.h>
-#include <LoRa.h>
+//#include <LoRa.h>
 #include "Arduino.h"
 #include <Wire.h>
 #include <string>
@@ -26,7 +26,7 @@
 #define ACC_SDA 25
 #define ACC_SCL 24
 
-#define LORA_BAND 433000000
+//#define LORA_BAND 433000000
 
 #define SS 10
 #define RST 32
@@ -43,14 +43,14 @@ float getSeconds(long time){
   return float(abs((time/1000)-(round(time/60000)*60)));
 }
 
-void sendPacket (String send) {  
-  LoRa.beginPacket();               // start packet
-  LoRa.print(send);                 // add payload
-  LoRa.endPacket();                 // finish packet and send it
-  LoRa.idle();                      // set standby mode
-  LoRa.disableInvertIQ();           // normal mode
-  //Serial.println("message sent");
-}
+// void sendPacket (String send) {  
+//   LoRa.beginPacket();               // start packet
+//   LoRa.print(send);                 // add payload
+//   LoRa.endPacket();                 // finish packet and send it
+//   LoRa.idle();                      // set standby mode
+//   LoRa.disableInvertIQ();           // normal mode
+//   Serial.println("message sent");
+// }
 // String onReceive() {
 //   String temp = "";
 //   int packetSize = LoRa.parsePacket();
@@ -100,7 +100,7 @@ void setup() {
   Wire1.begin();
   Wire2.begin();
   Serial.begin(9600);
-  LoRa.setPins(SS,DIO);
+  //LoRa.setPins(SS,DIO);
 
   //Intialize Sensors
   while (!Serial);
@@ -179,7 +179,7 @@ void loop() {
   accel375.getEvent(&event);
 
   //decision switch
-  bool grnLight = false;
+  //bool grnLight = false;
 
   //Store Data
   // 1 sec = 1000 milsec
@@ -214,8 +214,8 @@ void loop() {
 
   //operations
   sandDropAk(imuAccelY, flip, invFlp);
-  Serial.println("First cell: "+String(tempAk[0]));
-  Serial.println("Second cell: "+String(tempAk[1]));
+  //Serial.println("First cell: "+String(tempAk[0]));
+  //Serial.println("Second cell: "+String(tempAk[1]));
   tempAk[flip] = imuAccelY;
 
   globX += gyroX;
@@ -239,7 +239,7 @@ void loop() {
     output += ", Gyro Dlt X Y Z: " + String(gyroX) + "," + String(gyroY) + "," + String(gyroZ);
     output += ", Accelo X Y Z: " + String(accelX) + "," + String(accelY) + "," + String(accelZ);
     output += ", LinDlta Loop Y Accel: " + String(stepAk);
-    output += "Cycle count: " + String(cyCow);
+    output += ", Cycle count: " + String(cyCow);
     
 
     // Write to Serial
@@ -247,9 +247,9 @@ void loop() {
 
     // Write to file
     dataFile.println(output);
-    Serial.println("\nData written successfully.");
+   // Serial.println("\nData written successfully.");
 
   dataFile.close();
-  sendPacket(output);
+//  sendPacket(output);
 delay(180);
 }
